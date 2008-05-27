@@ -1,0 +1,81 @@
+connectNetwork() {
+    network=$1
+    echo
+    echo connectNetwork: network is $network
+    iwconfig wlan0 essid $network
+    echo ifconfig wlan0 up
+    ifconfig wlan0 up
+    echo dhcpcd wlan0
+    dhcpcd -t 10 wlan0
+    echo done!
+    sleep 1
+}
+
+tryNetwork() {
+    network=$1
+    iwconfig wlan0 essid $network
+    if [ $network = "uh" ];then
+	iwconfig wlan0 key open s:Aloha
+    fi
+    sleep 3
+    iwconfig 2> /dev/tty4 | grep $network > /tmp/jason_net.txt
+    jNet=`grep $network /tmp/jason_net.txt`
+    echo jNet is $jNet > /dev/tty4
+    if [ ! "$jNet" = "" ];then
+	echo true
+    else
+	echo false
+    fi
+}
+
+/root/my-scripts/wireless_start.sh
+cd /tmp
+echo trying \"Treefire\"
+test7=`tryNetwork "Treefire"`
+if [ "$test7" = "true" ];then
+    network="Treefire"
+else
+    echo trying \"uh\"
+    test7=`tryNetwork "uh"`
+    if [ "$test7" = "true" ];then
+	network="uh"
+    else
+	echo trying \"EE\"
+	test7=`tryNetwork ":EE"`
+	if [ "$test7" = "true" ];then
+	    network="EE"
+	else
+	    network=""
+	fi
+    fi
+fi
+
+#echo test7 is $test7
+#echo scan wlan0
+#iwlist wlan0 scan
+#iwconfig
+
+echo connected to network $network
+if [ ! "$network" = "" ];then
+    test6=`connectNetwork "$network"`
+fi
+echo test6 is $test6
+if [ "$network" = "uh" ];then
+    /usr/lib/mozilla/mozilla-bin www.google.com
+    #echo setting conky
+    #/root/my-scripts/conky/set-wlan0.sh
+else
+    if [ "$network" = "EE" ];then
+	echo username: eeuser
+	echo passowrd: mosfet
+	sleep 2
+	/usr/lib/mozilla/mozilla-bin www.google.com
+    fi
+fi
+#echo ifconfig wlan0 up
+#ifconfig wlan0 up
+#echo dhcpcd wlan0
+#dhcpcd -t 20 wlan0
+#echo Done!
+sleep 1
+exit
